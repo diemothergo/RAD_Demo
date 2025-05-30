@@ -1,0 +1,36 @@
+﻿<div class="container">
+    <h2 class="text-center mb-4">Step 3: Book a Ride</h2>
+    <div class="card p-4 shadow-sm">
+        <form asp-action="Book" method="post" class="needs-validation" novalidate>
+            <div class="mb-3">
+                <label for="pickupLocation" class="form-label">Pickup Location</label>
+                <input type="text" class="form-control" id="pickupLocation" name="pickupLocation" required />
+                <div class="invalid-feedback">Please enter a pickup location.</div>
+            </div>
+            <div class="mb-3">
+                <label for="dropoffLocation" class="form-label">Dropoff Location</label>
+                <input type="text" class="form-control" id="dropoffLocation" name="dropoffLocation" required />
+                <div class="invalid-feedback">Please enter a dropoff location.</div>
+            </div>
+            <button type="submit" class="btn btn-primary w-100">Book Ride</button>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        (function () {
+            'use strict';
+            var forms = document.querySelectorAll('.needs-validation');
+            Array.prototype.slice.call(forms).forEach(function (form) {
+                form.addEventListener('submit', function (event) {
+                    if (!form.checkValidity()) {
+                        event.preventDefault();
+                        event.stopPropagation();
+                    }
+                    form.classList.add('was-validated');
+                }, false);
+            });
+        })();
+    </script>
+}

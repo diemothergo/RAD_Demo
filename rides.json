@@ -1,0 +1,11 @@
+[
+  {
+    "Id": "ride1",
+    "CustomerId": "cust1",
+    "DriverId": "driver1",
+    "PickupLocation": "Hanoi",
+    "DropoffLocation": "HCMC",
+    "Status": 0,
+    "ETA": 15
+  }
+]

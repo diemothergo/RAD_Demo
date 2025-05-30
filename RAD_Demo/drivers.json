@@ -1,0 +1,14 @@
+[
+  {
+    "Id": "driver1",
+    "Name": "Nguyen Van A",
+    "CurrentLocation": "Hanoi",
+    "IsAvailable": true
+  },
+  {
+    "Id": "driver2",
+    "Name": "Tran Thi B",
+    "CurrentLocation": "HCMC",
+    "IsAvailable": true
+  }
+]

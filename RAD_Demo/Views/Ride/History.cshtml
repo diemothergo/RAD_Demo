@@ -1,0 +1,30 @@
+﻿@model IEnumerable<RAD_Demo.Models.Ride>
+
+<div class="container">
+    <h2>Lịch Sử Chuyến Đi</h2>
+    <table class="table">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Khách Hàng</th>
+                <th>Tài Xế</th>
+                <th>Điểm Đón</th>
+                <th>Điểm Đến</th>
+                <th>Trạng Thái</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var ride in Model)
+            {
+                <tr>
+                    <td>@ride.Id</td>
+                    <td>@ride.Customer?.Name</td>
+                    <td>@ride.Driver?.Name</td>
+                    <td>@ride.PickupLocation</td>
+                    <td>@ride.DropoffLocation</td>
+                    <td>@ride.Status</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
