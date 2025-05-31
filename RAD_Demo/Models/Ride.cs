@@ -1,16 +1,22 @@
 ﻿namespace RAD_Demo.Models;
 
-public class Ride(string id, string customerId, string driverId, string pickupLocation, string dropoffLocation)
+public enum RideStatus
 {
-    public string Id { get; set; } = id ?? throw new ArgumentNullException(nameof(id));
-    public string CustomerId { get; set; } = customerId ?? throw new ArgumentNullException(nameof(customerId));
-    public Customer? Customer { get; set; }
-    public string DriverId { get; set; } = driverId ?? throw new ArgumentNullException(nameof(driverId));
-    public Driver? Driver { get; set; }
-    public string PickupLocation { get; set; } = pickupLocation ?? throw new ArgumentNullException(nameof(pickupLocation));
-    public string DropoffLocation { get; set; } = dropoffLocation ?? throw new ArgumentNullException(nameof(dropoffLocation));
-    public RideStatus Status { get; set; } = RideStatus.Booked;
-    public int ETA { get; set; } = 15;
+    Booked,
+    InProgress,
+    Completed,
+    Cancelled
 }
 
-public enum RideStatus { Booked, InProgress, Completed, Cancelled }
+public class Ride(string id, string customerId, string driverId, string pickupLocation, string dropoffLocation)
+{
+    public string Id { get; init; } = id ?? throw new ArgumentNullException(nameof(id));
+    public string CustomerId { get; init; } = customerId ?? throw new ArgumentNullException(nameof(customerId));
+    public string DriverId { get; init; } = driverId ?? throw new ArgumentNullException(nameof(driverId));
+    public string PickupLocation { get; init; } = pickupLocation ?? throw new ArgumentNullException(nameof(pickupLocation));
+    public string DropoffLocation { get; init; } = dropoffLocation ?? throw new ArgumentNullException(nameof(dropoffLocation));
+    public Customer? Customer { get; set; }
+    public Driver? Driver { get; set; }
+    public RideStatus Status { get; set; }
+    public int ETA { get; set; }
+}

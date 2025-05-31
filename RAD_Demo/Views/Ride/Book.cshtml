@@ -1,36 +1,81 @@
-﻿<div class="container">
-    <h2 class="text-center mb-4">Step 3: Book a Ride</h2>
-    <div class="card p-4 shadow-sm">
-        <form asp-action="Book" method="post" class="needs-validation" novalidate>
-            <div class="mb-3">
-                <label for="pickupLocation" class="form-label">Pickup Location</label>
-                <input type="text" class="form-control" id="pickupLocation" name="pickupLocation" required />
-                <div class="invalid-feedback">Please enter a pickup location.</div>
-            </div>
-            <div class="mb-3">
-                <label for="dropoffLocation" class="form-label">Dropoff Location</label>
-                <input type="text" class="form-control" id="dropoffLocation" name="dropoffLocation" required />
-                <div class="invalid-feedback">Please enter a dropoff location.</div>
-            </div>
-            <button type="submit" class="btn btn-primary w-100">Book Ride</button>
-        </form>
+﻿@{
+    ViewData["Title"] = "Đặt xe";
+    ViewBag.Step = "Book";
+}
+
+<h1>Đặt xe</h1>
+
+@if (TempData["SuccessMessage"] != null)
+{
+    <div class="alert alert-success">
+        @TempData["SuccessMessage"]
     </div>
-</div>
+}
+
+@if (ViewData.ModelState.Any(x => x.Value.Errors.Any()))
+{
+    <div class="alert alert-danger">
+        <ul>
+            @foreach (var error in ViewData.ModelState.Values.SelectMany(v => v.Errors))
+            {
+                <li>@error.ErrorMessage</li>
+            }
+        </ul>
+    </div>
+}
+
+<form asp-action="Book" method="post">
+    <div class="form-group">
+        <label for="pickupLocation">Điểm đón</label>
+        <input type="text" class="form-control" id="pickupLocation" name="pickupLocation" required />
+    </div>
+    <div class="form-group">
+        <label for="dropoffLocation">Điểm đến</label>
+        <input type="text" class="form-control" id="dropoffLocation" name="dropoffLocation" required />
+    </div>
+    <button type="submit" class="btn btn-primary">Xác nhận</button>
+</form>
 
 @section Scripts {
-    <script>
-        (function () {
-            'use strict';
-            var forms = document.querySelectorAll('.needs-validation');
-            Array.prototype.slice.call(forms).forEach(function (form) {
-                form.addEventListener('submit', function (event) {
-                    if (!form.checkValidity()) {
-                        event.preventDefault();
-                        event.stopPropagation();
-                    }
-                    form.classList.add('was-validated');
-                }, false);
-            });
-        })();
-    </script>
+    <partial name="_ValidationScriptsPartial" />
+}@{
+    ViewData["Title"] = "Đặt xe";
+    ViewBag.Step = "Book";
+}
+
+<h1>Đặt xe</h1>
+
+@if (TempData["SuccessMessage"] != null)
+{
+    <div class="alert alert-success">
+        @TempData["SuccessMessage"]
+    </div>
+}
+
+@if (ViewData.ModelState.Any(x => x.Value.Errors.Any()))
+{
+    <div class="alert alert-danger">
+        <ul>
+            @foreach (var error in ViewData.ModelState.Values.SelectMany(v => v.Errors))
+            {
+                <li>@error.ErrorMessage</li>
+            }
+        </ul>
+    </div>
+}
+
+<form asp-action="Book" method="post">
+    <div class="form-group">
+        <label for="pickupLocation">Điểm đón</label>
+        <input type="text" class="form-control" id="pickupLocation" name="pickupLocation" required />
+    </div>
+    <div class="form-group">
+        <label for="dropoffLocation">Điểm đến</label>
+        <input type="text" class="form-control" id="dropoffLocation" name="dropoffLocation" required />
+    </div>
+    <button type="submit" class="btn btn-primary">Xác nhận</button>
+</form>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
 }

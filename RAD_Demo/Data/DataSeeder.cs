@@ -1,5 +1,4 @@
 ﻿using RAD_Demo.Models;
-using System.Text.Json;
 
 namespace RAD_Demo.Data;
 
@@ -7,52 +6,26 @@ public static class DataSeeder
 {
     public static void Seed(AppDbContext context)
     {
-        context.Database.EnsureCreated();
+        if (!context.Drivers.Any())
+        {
+            var drivers = new List<Driver>
+            {
+                new Driver("D1", "Driver 1", true) { CurrentLocation = "Hanoi" },
+                new Driver("D2", "Driver 2", true) { CurrentLocation = "HCMC" }
+            };
+            context.Drivers.AddRange(drivers);
+            context.SaveChanges();
+        }
 
         if (!context.Customers.Any())
         {
-            var customersJson = File.ReadAllText("customers.json");
-            var customers = JsonSerializer.Deserialize<List<Customer>>(customersJson);
-            if (customers != null)
+            var customers = new List<Customer>
             {
-                context.Customers.AddRange(customers);
-                context.SaveChanges();
-            }
-        }
-
-        if (!context.Drivers.Any())
-        {
-            var driversJson = File.ReadAllText("drivers.json");
-            var drivers = JsonSerializer.Deserialize<List<Driver>>(driversJson);
-            if (drivers != null)
-            {
-                context.Drivers.AddRange(drivers);
-                context.SaveChanges();
-            }
-        }
-
-        if (!context.Rides.Any())
-        {
-            var ridesJson = File.ReadAllText("rides.json");
-            var rides = JsonSerializer.Deserialize<List<Ride>>(ridesJson);
-            if (rides != null)
-            {
-                foreach (var ride in rides)
-                {
-                    if (!context.Customers.Any(c => c.Id == ride.CustomerId))
-                    {
-                        context.Customers.Add(new Customer(ride.CustomerId, "Unknown Customer"));
-                        context.SaveChanges();
-                    }
-                    if (!context.Drivers.Any(d => d.Id == ride.DriverId))
-                    {
-                        context.Drivers.Add(new Driver(ride.DriverId, "Unknown Driver", "Unknown Location"));
-                        context.SaveChanges();
-                    }
-                    context.Rides.Add(ride);
-                }
-                context.SaveChanges();
-            }
+                new Customer("C1", "Customer 1"),
+                new Customer("C2", "Customer 2")
+            };
+            context.Customers.AddRange(customers);
+            context.SaveChanges();
         }
     }
 }

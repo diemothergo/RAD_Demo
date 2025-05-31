@@ -1,151 +1,106 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using RAD_Demo.Models;
 using RAD_Demo.Services;
+using RAD_Demo.Models;
 
-namespace RAD_Demo.Controllers
+namespace RAD_Demo.Controllers;
+
+public class RideController : Controller
 {
-    public class RideController : Controller
+    private readonly BookingManager _bookingManager;
+    private readonly ILogger<RideController> _logger;
+
+    public RideController(BookingManager bookingManager, ILogger<RideController> logger)
     {
-        private readonly BookingManager _bookingManager;
+        _bookingManager = bookingManager;
+        _logger = logger;
+    }
 
-        public RideController(BookingManager bookingManager)
+    [Authorize]
+    public IActionResult Index()
+    {
+        _logger.LogInformation("Accessing Ride/Index. IsAuthenticated: {IsAuthenticated}", User.Identity?.IsAuthenticated);
+        if (!User.Identity?.IsAuthenticated ?? true)
         {
-            _bookingManager = bookingManager;
+            _logger.LogWarning("Unauthenticated user accessing Ride/Index, redirecting to Account/Login");
+            return RedirectToAction("Login", "Account");
+        }
+        ViewBag.Step = "Index";
+        return View();
+    }
+
+    [Authorize]
+    public IActionResult Book()
+    {
+        _logger.LogInformation("Accessing Ride/Book. IsAuthenticated: {IsAuthenticated}", User.Identity?.IsAuthenticated);
+        if (!User.Identity?.IsAuthenticated ?? true)
+        {
+            _logger.LogWarning("Unauthenticated user accessing Ride/Book, redirecting to Account/Login");
+            return RedirectToAction("Login", "Account");
+        }
+        ViewBag.Step = "Book";
+        return View();
+    }
+
+    [Authorize]
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public IActionResult Book(string pickupLocation, string dropoffLocation)
+    {
+        _logger.LogInformation("Attempting to book ride. Pickup: {Pickup}, Dropoff: {Dropoff}, IsAuthenticated: {IsAuthenticated}",
+            pickupLocation, dropoffLocation, User.Identity?.IsAuthenticated);
+        ViewBag.Step = "Book";
+
+        if (!User.Identity?.IsAuthenticated ?? true)
+        {
+            _logger.LogWarning("Unauthenticated user attempting to book ride, redirecting to Account/Login");
+            return RedirectToAction("Login", "Account");
         }
 
-        // Trang chính - hiển thị danh sách rides (không yêu cầu đăng nhập)
-        [AllowAnonymous]
-        public IActionResult Index()
+        if (string.IsNullOrWhiteSpace(pickupLocation) || string.IsNullOrWhiteSpace(dropoffLocation))
         {
-            try
-            {
-                var rides = _bookingManager.GetAllRides();
-                ViewBag.IsAuthenticated = User.Identity?.IsAuthenticated ?? false;
-                return View(rides);
-            }
-            catch (Exception ex)
-            {
-                // Log error nếu cần
-                TempData["ErrorMessage"] = "Có lỗi xảy ra khi tải dữ liệu.";
-                return View(new List<Ride>());
-            }
-        }
-
-        // Trang đặt xe - yêu cầu đăng nhập
-        [Authorize]
-        [HttpGet]
-        public IActionResult Book()
-        {
-            ViewBag.Step = "Book";
+            _logger.LogWarning("Invalid booking: Pickup or Dropoff is empty. Pickup: {Pickup}, Dropoff: {Dropoff}",
+                pickupLocation, dropoffLocation);
+            ModelState.AddModelError("", "Vui lòng nhập đầy đủ điểm đón và điểm đến.");
             return View();
         }
 
-        // Xử lý đặt xe - yêu cầu đăng nhập
-        [Authorize]
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public IActionResult Book(string pickupLocation, string dropoffLocation)
+        if (pickupLocation.Trim().Equals(dropoffLocation.Trim(), StringComparison.OrdinalIgnoreCase))
         {
-            ViewBag.Step = "Book";
-
-            if (string.IsNullOrWhiteSpace(pickupLocation) || string.IsNullOrWhiteSpace(dropoffLocation))
-            {
-                ModelState.AddModelError("", "Vui lòng nhập đầy đủ điểm đón và điểm đến.");
-                return View();
-            }
-
-            if (pickupLocation.Trim().Equals(dropoffLocation.Trim(), StringComparison.OrdinalIgnoreCase))
-            {
-                ModelState.AddModelError("", "Điểm đón và điểm đến không thể giống nhau.");
-                return View();
-            }
-
-            try
-            {
-                var customer = new Customer(
-                    Guid.NewGuid().ToString(),
-                    User.Identity?.Name ?? "Anonymous"
-                );
-
-                _bookingManager.BookRide(customer, pickupLocation.Trim(), dropoffLocation.Trim());
-
-                TempData["SuccessMessage"] = "Đặt xe thành công!";
-                return RedirectToAction("History");
-            }
-            catch (Exception ex)
-            {
-                ModelState.AddModelError("", "Có lỗi xảy ra khi đặt xe. Vui lòng thử lại.");
-                return View();
-            }
+            _logger.LogWarning("Invalid booking: Pickup and Dropoff are the same");
+            ModelState.AddModelError("", "Điểm đón và điểm đến không thể giống nhau.");
+            return View();
         }
 
-        // Lịch sử đặt xe - yêu cầu đăng nhập
-        [Authorize]
-        public IActionResult History()
+        try
         {
-            try
+            if (string.IsNullOrEmpty(User.Identity?.Name))
             {
-                var rides = _bookingManager.GetAllRides();
-
-                // Lọc rides của user hiện tại nếu cần
-                var userEmail = User.Identity?.Name;
-                if (!string.IsNullOrEmpty(userEmail))
-                {
-                    // Nếu bạn muốn chỉ hiển thị rides của user hiện tại
-                    // rides = rides.Where(r => r.Customer.Name == userEmail).ToList();
-                }
-
-                return View(rides);
-            }
-            catch (Exception ex)
-            {
-                TempData["ErrorMessage"] = "Có lỗi xảy ra khi tải lịch sử.";
-                return View(new List<Ride>());
-            }
-        }
-
-        // Hủy đặt xe - yêu cầu đăng nhập
-        [Authorize]
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public IActionResult Cancel(string rideId)
-        {
-            if (string.IsNullOrEmpty(rideId))
-            {
-                TempData["ErrorMessage"] = "Thông tin chuyến xe không hợp lệ.";
-                return RedirectToAction("History");
+                _logger.LogError("User.Identity.Name is null or empty");
+                throw new InvalidOperationException("User is not authenticated");
             }
 
-            try
-            {
-                // Thêm logic hủy xe nếu có trong BookingManager
-                // _bookingManager.CancelRide(rideId);
+            // Lấy hoặc tạo Customer dựa trên User.Identity.Name
+            var customer = new Customer(Guid.NewGuid().ToString(), User.Identity.Name);
+            _logger.LogInformation("Booking ride for customer: {CustomerId}, {CustomerName}", customer.Id, customer.Name);
 
-                TempData["SuccessMessage"] = "Hủy chuyến xe thành công.";
-            }
-            catch (Exception ex)
-            {
-                TempData["ErrorMessage"] = "Có lỗi xảy ra khi hủy chuyến xe.";
-            }
-
+            var ride = _bookingManager.BookRide(customer, pickupLocation.Trim(), dropoffLocation.Trim());
+            _logger.LogInformation("Ride {RideId} booked successfully for user {User}", ride.Id, User.Identity.Name);
+            TempData["SuccessMessage"] = $"Đặt xe thành công! Mã chuyến xe: {ride.Id}";
             return RedirectToAction("History");
         }
-
-        // API endpoint để lấy thông tin rides (cho AJAX calls)
-        [AllowAnonymous]
-        [HttpGet]
-        public IActionResult GetRides()
+        catch (InvalidOperationException ex) when (ex.Message.Contains("Không có tài xế nào khả dụng"))
         {
-            try
-            {
-                var rides = _bookingManager.GetAllRides();
-                return Json(rides);
-            }
-            catch (Exception ex)
-            {
-                return Json(new { error = "Có lỗi xảy ra" });
-            }
+            _logger.LogWarning(ex, "No drivers available for booking");
+            ModelState.AddModelError("", "Hiện tại không có tài xế nào khả dụng. Vui lòng thử lại sau.");
+            return View();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error booking ride for user {User}. Exception: {Message}",
+                User.Identity?.Name ?? "Unknown", ex.Message);
+            ModelState.AddModelError("", $"Có lỗi xảy ra khi đặt xe: {ex.Message}. Vui lòng thử lại.");
+            return View();
         }
     }
 }

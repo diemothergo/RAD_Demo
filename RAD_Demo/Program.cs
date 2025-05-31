@@ -6,11 +6,9 @@ using RAD_Demo.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Database configuration
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-// Identity configuration
 builder.Services.AddIdentity<IdentityUser, IdentityRole>(options =>
 {
     options.Password.RequireDigit = false;
@@ -22,16 +20,13 @@ builder.Services.AddIdentity<IdentityUser, IdentityRole>(options =>
 .AddEntityFrameworkStores<AppDbContext>()
 .AddDefaultTokenProviders();
 
-// MVC configuration
 builder.Services.AddControllersWithViews()
     .AddRazorRuntimeCompilation();
 
-// Custom services
 builder.Services.AddSingleton<LocationTracker>();
 builder.Services.AddSingleton<PaymentSimulator>();
 builder.Services.AddScoped<BookingManager>();
 
-// Session configuration
 builder.Services.AddDistributedMemoryCache();
 builder.Services.AddSession(options =>
 {
@@ -40,7 +35,6 @@ builder.Services.AddSession(options =>
     options.Cookie.IsEssential = true;
 });
 
-// Authentication configuration
 builder.Services.ConfigureApplicationCookie(options =>
 {
     options.LoginPath = "/Account/Login";
@@ -48,11 +42,18 @@ builder.Services.ConfigureApplicationCookie(options =>
     options.AccessDeniedPath = "/Account/AccessDenied";
     options.ExpireTimeSpan = TimeSpan.FromHours(2);
     options.SlidingExpiration = true;
+    options.Cookie.HttpOnly = true;
+    options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
+    options.Cookie.Name = ".AspNetCore.Identity.Application";
+    options.Events.OnRedirectToLogin = context =>
+    {
+        context.Response.Redirect(context.RedirectUri);
+        return Task.CompletedTask;
+    };
 });
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline
 if (app.Environment.IsDevelopment())
 {
     app.UseDeveloperExceptionPage();
@@ -66,23 +67,33 @@ else
 app.UseHttpsRedirection();
 app.UseStaticFiles();
 app.UseRouting();
-app.UseSession();
 app.UseAuthentication();
 app.UseAuthorization();
+app.UseSession();
 
-// Root route mapping (keep only one)
 app.MapGet("/", async context =>
 {
-    context.Response.Redirect("/Account/Welcome");
-    await Task.CompletedTask;
+    var logger = app.Services.GetRequiredService<ILogger<Program>>();
+    logger.LogInformation("Accessing root route. IsAuthenticated: {IsAuthenticated}", context.User.Identity?.IsAuthenticated);
+
+    if (!context.User.Identity?.IsAuthenticated ?? true)
+    {
+        context.Response.Cookies.Delete(".AspNetCore.Identity.Application");
+        var signInManager = context.RequestServices.GetRequiredService<SignInManager<IdentityUser>>();
+        await signInManager.SignOutAsync();
+        logger.LogInformation("Unauthenticated user, redirecting to /Account/Login");
+        context.Response.Redirect("/Account/Login");
+        return;
+    }
+
+    logger.LogInformation("Authenticated user, redirecting to /Ride/Index");
+    context.Response.Redirect("/Ride/Index");
 });
 
-// Controller route mapping
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Ride}/{action=Index}/{id?}");
 
-// Database seeding
 try
 {
     using var scope = app.Services.CreateScope();

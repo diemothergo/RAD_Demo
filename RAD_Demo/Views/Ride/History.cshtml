@@ -1,30 +1,65 @@
 ﻿@model IEnumerable<RAD_Demo.Models.Ride>
+@{
+    ViewData["Title"] = "Lịch sử đặt xe";
+}
 
-<div class="container">
-    <h2>Lịch Sử Chuyến Đi</h2>
+<h1>Lịch sử đặt xe</h1>
+
+@if (TempData["SuccessMessage"] != null)
+{
+    <div class="alert alert-success">
+        @TempData["SuccessMessage"]
+    </div>
+}
+
+@if (TempData["ErrorMessage"] != null)
+{
+    <div class="alert alert-danger">
+        @TempData["ErrorMessage"]
+    </div>
+}
+
+@if (Model?.Any() == true)
+{
     <table class="table">
         <thead>
             <tr>
-                <th>ID</th>
-                <th>Khách Hàng</th>
-                <th>Tài Xế</th>
-                <th>Điểm Đón</th>
-                <th>Điểm Đến</th>
-                <th>Trạng Thái</th>
+                <th>Mã chuyến xe</th>
+                <th>Khách hàng</th>
+                <th>Tài xế</th>
+                <th>Điểm đón</th>
+                <th>Điểm đến</th>
+                <th>Trạng thái</th>
+                <th>ETA (phút)</th>
+                <th>Hành động</th>
             </tr>
         </thead>
         <tbody>
             @foreach (var ride in Model)
             {
                 <tr>
-                    <td>@ride.Id</td>
-                    <td>@ride.Customer?.Name</td>
-                    <td>@ride.Driver?.Name</td>
-                    <td>@ride.PickupLocation</td>
-                    <td>@ride.DropoffLocation</td>
+                    <td>@(ride.Id ?? "N/A")</td>
+                    <td>@(ride.Customer?.Name ?? "N/A")</td>
+                    <td>@(ride.Driver?.Name ?? "N/A")</td>
+                    <td>@(ride.PickupLocation ?? "N/A")</td>
+                    <td>@(ride.DropoffLocation ?? "N/A")</td>
                     <td>@ride.Status</td>
+                    <td>@ride.ETA</td>
+                    <td>
+                        @if (ride.Status == RideStatus.Booked)
+                        {
+                            <form asp-action="Cancel" method="post" style="display:inline;">
+                                <input type="hidden" name="rideId" value="@(ride.Id ?? "")" />
+                                <button type="submit" class="btn btn-danger btn-sm">Hủy</button>
+                            </form>
+                        }
+                    </td>
                 </tr>
             }
         </tbody>
     </table>
-</div>
+}
+else
+{
+    <p>Chưa có chuyến xe nào.</p>
+}
