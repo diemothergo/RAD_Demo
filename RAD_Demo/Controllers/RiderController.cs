@@ -110,5 +110,22 @@ public class RideController : Controller
         var rides = _bookingManager.GetAllRides(); // optionally filter by customer
         return View(rides);
     }
+    [Authorize]
+    [HttpPost]
+    public IActionResult Complete(string rideId)
+    {
+        try
+        {
+            _bookingManager.CompleteRide(rideId);
+            TempData["SuccessMessage"] = "Chuyến xe đã hoàn tất và thanh toán thành công.";
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Lỗi khi hoàn tất chuyến xe");
+            TempData["ErrorMessage"] = "Có lỗi xảy ra khi hoàn tất chuyến xe.";
+        }
+
+        return RedirectToAction("History");
+    }
 
 }

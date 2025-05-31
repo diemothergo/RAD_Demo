@@ -52,7 +52,18 @@
                                 <input type="hidden" name="rideId" value="@(ride.Id ?? "")" />
                                 <button type="submit" class="btn btn-danger btn-sm">Hủy</button>
                             </form>
+                        }@if (ride.Status == RideStatus.Booked || ride.Status == RideStatus.InProgress)
+                        {
+                            <form asp-action="Cancel" method="post" style="display:inline;">
+                                <input type="hidden" name="rideId" value="@(ride.Id ?? "")" />
+                                <button type="submit" class="btn btn-danger btn-sm me-1">Hủy</button>
+                            </form>
+                            <form asp-action="Complete" method="post" style="display:inline;">
+                                <input type="hidden" name="rideId" value="@(ride.Id ?? "")" />
+                                <button type="submit" class="btn btn-success btn-sm">Hoàn tất</button>
+                            </form>
                         }
+
                     </td>
                 </tr>
             }

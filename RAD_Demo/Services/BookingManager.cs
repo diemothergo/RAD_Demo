@@ -45,9 +45,12 @@ public class BookingManager
             {
                 Customer = customer,
                 Driver = driver,
-                Status = RideStatus.Booked, // ✅ Quan trọng: KHỞI TẠO Status
+                Status = RideStatus.Booked,
                 ETA = new LocationTracker().CalculateETA()
             };
+
+            // Đánh dấu tài xế đã bận
+            driver.IsAvailable = false;
 
             context.Rides.Add(ride);
 
@@ -100,6 +103,22 @@ public class BookingManager
     {
         var ride = GetRide(id);
         ride.Status = RideStatus.Completed;
+
+        // Gọi mô phỏng thanh toán
+        var amount = CalculateFare(ride);
+        var paymentSuccess = new PaymentSimulator().ProcessPayment(ride.Id, amount);
+
+        if (!paymentSuccess)
+        {
+            throw new InvalidOperationException("Thanh toán không thành công.");
+        }
+
+        // Trả lại tài xế
+        if (ride.Driver != null)
+        {
+            ride.Driver.IsAvailable = true;
+        }
+
         context.SaveChanges();
     }
 
@@ -107,7 +126,21 @@ public class BookingManager
     {
         var ride = GetRide(id);
         ride.Status = RideStatus.Cancelled;
+
+        // Trả lại tài xế nếu cần
+        if (ride.Driver != null)
+        {
+            ride.Driver.IsAvailable = true;
+        }
+
         context.Rides.Remove(ride);
         context.SaveChanges();
+    }
+
+    // 🆕 Tính tiền đơn giản
+    private double CalculateFare(Ride ride)
+    {
+        // Cố định 50.000đ mỗi chuyến
+        return 50000;
     }
 }
