@@ -102,5 +102,13 @@ public class RideController : Controller
             ModelState.AddModelError("", $"Có lỗi xảy ra khi đặt xe: {ex.Message}. Vui lòng thử lại.");
             return View();
         }
+
     }
+    [Authorize]
+    public IActionResult History()
+    {
+        var rides = _bookingManager.GetAllRides(); // optionally filter by customer
+        return View(rides);
+    }
+
 }

@@ -6,9 +6,11 @@ using RAD_Demo.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// DB Context
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection")));
 
+// Identity
 builder.Services.AddIdentity<IdentityUser, IdentityRole>(options =>
 {
     options.Password.RequireDigit = false;
@@ -20,9 +22,8 @@ builder.Services.AddIdentity<IdentityUser, IdentityRole>(options =>
 .AddEntityFrameworkStores<AppDbContext>()
 .AddDefaultTokenProviders();
 
-builder.Services.AddControllersWithViews()
-    .AddRazorRuntimeCompilation();
-
+// Services
+builder.Services.AddControllersWithViews().AddRazorRuntimeCompilation();
 builder.Services.AddSingleton<LocationTracker>();
 builder.Services.AddSingleton<PaymentSimulator>();
 builder.Services.AddScoped<BookingManager>();
@@ -35,6 +36,7 @@ builder.Services.AddSession(options =>
     options.Cookie.IsEssential = true;
 });
 
+// Cookie auth config
 builder.Services.ConfigureApplicationCookie(options =>
 {
     options.LoginPath = "/Account/Login";
@@ -54,6 +56,7 @@ builder.Services.ConfigureApplicationCookie(options =>
 
 var app = builder.Build();
 
+// Middleware
 if (app.Environment.IsDevelopment())
 {
     app.UseDeveloperExceptionPage();
@@ -71,33 +74,24 @@ app.UseAuthentication();
 app.UseAuthorization();
 app.UseSession();
 
-app.MapGet("/", async context =>
+// ✅ Trang mặc định chuyển về Welcome
+app.MapGet("/", context =>
 {
-    var logger = app.Services.GetRequiredService<ILogger<Program>>();
-    logger.LogInformation("Accessing root route. IsAuthenticated: {IsAuthenticated}", context.User.Identity?.IsAuthenticated);
-
-    if (!context.User.Identity?.IsAuthenticated ?? true)
-    {
-        context.Response.Cookies.Delete(".AspNetCore.Identity.Application");
-        var signInManager = context.RequestServices.GetRequiredService<SignInManager<IdentityUser>>();
-        await signInManager.SignOutAsync();
-        logger.LogInformation("Unauthenticated user, redirecting to /Account/Login");
-        context.Response.Redirect("/Account/Login");
-        return;
-    }
-
-    logger.LogInformation("Authenticated user, redirecting to /Ride/Index");
-    context.Response.Redirect("/Ride/Index");
+    context.Response.Redirect("/Account/Welcome");
+    return Task.CompletedTask;
 });
 
+// ✅ Route chính mặc định là Account/Welcome
 app.MapControllerRoute(
     name: "default",
-    pattern: "{controller=Ride}/{action=Index}/{id?}");
+    pattern: "{controller=Account}/{action=Welcome}/{id?}");
 
+// ✅ Tạo và seed database
 try
 {
     using var scope = app.Services.CreateScope();
     var context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+    await context.Database.EnsureDeletedAsync(); // ⛔️ Xoá DB cũ để tránh lỗi Rides.Status
     await context.Database.EnsureCreatedAsync();
     DataSeeder.Seed(context);
 }

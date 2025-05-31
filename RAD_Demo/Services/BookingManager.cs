@@ -28,11 +28,11 @@ public class BookingManager
                 throw new InvalidOperationException("Không có tài xế nào khả dụng.");
             }
 
-            // Kiểm tra khách hàng tồn tại
+            // Kiểm tra khách hàng đã tồn tại chưa
             var existingCustomer = context.Customers.FirstOrDefault(c => c.Name == customer.Name);
             if (existingCustomer != null)
             {
-                customer = existingCustomer; // Sử dụng khách hàng hiện có
+                customer = existingCustomer; // Dùng lại customer cũ
             }
 
             var ride = new Ride(
@@ -45,11 +45,12 @@ public class BookingManager
             {
                 Customer = customer,
                 Driver = driver,
-                Status = RideStatus.Booked,
+                Status = RideStatus.Booked, // ✅ Quan trọng: KHỞI TẠO Status
                 ETA = new LocationTracker().CalculateETA()
             };
 
             context.Rides.Add(ride);
+
             if (existingCustomer == null)
             {
                 context.Customers.Add(customer);
@@ -71,6 +72,7 @@ public class BookingManager
     public Ride GetRide(string id)
     {
         if (string.IsNullOrEmpty(id)) throw new ArgumentNullException(nameof(id));
+
         return context.Rides
             .Include(r => r.Customer)
             .Include(r => r.Driver)
@@ -89,6 +91,7 @@ public class BookingManager
     public Driver GetDriver(string driverId)
     {
         if (string.IsNullOrEmpty(driverId)) throw new ArgumentNullException(nameof(driverId));
+
         return context.Drivers.FirstOrDefault(d => d.Id == driverId)
             ?? throw new InvalidOperationException($"Không tìm thấy tài xế với ID {driverId}");
     }
